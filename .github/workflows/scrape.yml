@@ -5,8 +5,7 @@ on:
     - cron: "*/5 * * * *"
 
 jobs:
-  pytest:
+  scrape-and-store:
     runs-on: ubuntu-latest
     steps:
-      - uses: sksat/setup-rye@v0.8.0
-      - run: rye run as_json
+      - run: exit 0

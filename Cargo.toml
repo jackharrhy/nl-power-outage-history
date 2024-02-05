@@ -1,0 +1,12 @@
+[package]
+name = "nl-power-outage-history"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chrono = { version = "0.4.33", features = ["serde"] }
+chrono-tz = "0.8.5"
+reqwest = { version = "0.11", features = ["blocking"] }
+scraper = "0.18"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
