@@ -1,0 +1,26 @@
+[project]
+name = "nl-power-outage-history"
+version = "0.1.0"
+description = "Add your description here"
+authors = [{ name = "Jack Arthur Harrhy", email = "me@jackharrhy.com" }]
+dependencies = ["httpx>=0.26.0", "beautifulsoup4>=4.12.3"]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[project.scripts]
+test = "nl_power_outage_history:test"
+as_json = "nl_power_outage_history:as_json"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = []
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nl_power_outage_history"]
