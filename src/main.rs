@@ -1,4 +1,4 @@
-use chrono::{DateTime, ParseError};
+use chrono::{DateTime, NaiveDateTime, ParseError, TimeZone};
 use chrono_tz::Canada::Newfoundland;
 use chrono_tz::Tz;
 use scraper::{Html, Selector};
@@ -7,20 +7,29 @@ use serde::Serialize;
 
 #[derive(Serialize, Debug)]
 struct Outage {
-    location: Option<String>,
     outage_type: Option<String>,
+    locations: Option<Vec<String>>,
     estimated_start_time: Option<DateTime<Tz>>,
     estimated_restore_time: Option<DateTime<Tz>>,
     cause: Option<String>,
     customers_affected: Option<String>,
+    crew_status: Option<String>,
 }
 
-fn parse_time(time_str: &str) -> Result<DateTime<Tz>, ParseError> {
-    let dt = DateTime::parse_from_str(time_str, "%a %b %d, %Y %I:%M %p")?;
+fn parse_time(time_str: &str) -> Result<Option<DateTime<Tz>>, ParseError> {
+    let time_str = time_str.split_whitespace().collect::<Vec<_>>().join(" ");
 
-    let dt = dt.with_timezone(&Newfoundland);
+    // if time string is "Unknown", return None
 
-    Ok(dt)
+    if time_str == "Unknown" {
+        return Ok(None);
+    }
+
+    let dt = NaiveDateTime::parse_from_str(time_str.as_str(), "%a %b %e, %Y %l:%M %p")?;
+
+    let dt = Newfoundland.from_local_datetime(&dt).unwrap();
+
+    Ok(Some(dt))
 }
 
 fn main() {
@@ -42,12 +51,13 @@ fn main() {
         let row_selector = Selector::parse(".row").unwrap();
 
         let mut outage = Outage {
-            location: None,
+            locations: None,
             outage_type: None,
             estimated_start_time: None,
             estimated_restore_time: None,
             cause: None,
             customers_affected: None,
+            crew_status: None,
         };
 
         for row in element.select(&row_selector) {
@@ -60,15 +70,17 @@ fn main() {
 
             match label.as_str() {
                 "Outage Type:" => outage.outage_type = Some(value),
-                "Location:" => outage.location = Some(value),
-                "Est. Start:" => {
-                    outage.estimated_start_time = Some(parse_time(value.as_str()).unwrap())
+                "Location:" => {
+                    outage.locations =
+                        Some(value.split(",").map(|s| s.trim().to_string()).collect())
                 }
+                "Est. Start:" => outage.estimated_start_time = parse_time(value.as_str()).unwrap(),
                 "Est. Restore:" => {
-                    outage.estimated_restore_time = Some(parse_time(value.as_str()).unwrap())
+                    outage.estimated_restore_time = parse_time(value.as_str()).unwrap()
                 }
                 "Cause:" => outage.cause = Some(value),
                 "Cust. Affected:" => outage.customers_affected = Some(value),
+                "Crew Status:" => outage.crew_status = Some(value),
                 _ => panic!("Unknown label: {}", label),
             }
         }
